@@ -1,0 +1,23 @@
+{
+    "appKeys": {},
+    "capabilities": [
+        ""
+    ],
+    "companyName": "singingbush",
+    "longName": "Hex Time",
+    "projectType": "native",
+    "resources": {
+        "media": []
+    },
+    "sdkVersion": "3",
+    "shortName": "Hex Time",
+    "targetPlatforms": [
+        "aplite",
+        "basalt"
+    ],
+    "uuid": "72a11725-881e-4b68-8ecd-4ee5f96a16ea",
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": false
+    }
+}
