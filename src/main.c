@@ -35,22 +35,36 @@ static void graphics_update_proc(Layer *layer, GContext *ctx) {
     GRect bounds = layer_get_bounds(layer); // starts top - left
     GPoint center = grect_center_point(&bounds);
     
-    int space = bounds.size.w / 9; // a bit dangerous
-    int y = center.y / 2;
+    int space = bounds.size.w / 8; // a bit dangerous
+    int upperY = center.y / 2;
+    int lowerY = center.y + upperY;
     
-    for(int i = space; i < bounds.size.w; i += space) {
+    //APP_LOG(APP_LOG_LEVEL_DEBUG, "Bounds: %d by %d", bounds.size.w, bounds.size.h); // 144 x 168
+    
+    // Get a tm structure
+    time_t temp = time(NULL); 
+    struct tm *tick_time = localtime(&temp);
+    
+    for(int i = space/2; i < bounds.size.w; i += space) {
         GPoint dot = {
             .x = i, // center.x -80,
-            .y = y
+            .y = upperY
         };
-        graphics_draw_circle(ctx, dot, 5);
+        graphics_draw_circle(ctx, dot, 4);
+        
+        GPoint dot2 = {
+            .x = i,
+            .y = lowerY
+        };
+        
+        graphics_fill_circle(ctx, dot2, 4);
     }
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "time changed by %d", units_changed);
     // 2 for MINUTE_UNIT or 4 for HOUR_UNIT (you'll see 3 for sec and mins, or 7 for hours,min,secs)
-  update_time();
+    update_time();
 }
 
 static void main_window_load(Window *window) {
