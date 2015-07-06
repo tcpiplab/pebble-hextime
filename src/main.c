@@ -1,6 +1,7 @@
 #include <pebble.h>
   
 static Window *s_main_window;
+static Layer *s_gfx_layer;
 static TextLayer *s_time_layer;
 
 static void update_time() {
@@ -28,11 +29,38 @@ static void update_time() {
   text_layer_set_text(s_time_layer, buffer);
 }
 
+static void graphics_update_proc(Layer *layer, GContext *ctx) {
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Update graphics");
+    
+    GRect bounds = layer_get_bounds(layer); // starts top - left
+    GPoint center = grect_center_point(&bounds);
+    
+    int space = bounds.size.w / 9; // a bit dangerous
+    int y = center.y / 2;
+    
+    for(int i = space; i < bounds.size.w; i += space) {
+        GPoint dot = {
+            .x = i, // center.x -80,
+            .y = y
+        };
+        graphics_draw_circle(ctx, dot, 5);
+    }
+}
+
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "time changed by %d", units_changed);
+    // 2 for MINUTE_UNIT or 4 for HOUR_UNIT (you'll see 3 for sec and mins, or 7 for hours,min,secs)
   update_time();
 }
 
 static void main_window_load(Window *window) {
+    Layer *window_layer = window_get_root_layer(window);
+    GRect bounds = layer_get_bounds(window_layer);
+    
+    s_gfx_layer = layer_create(bounds);
+    layer_set_update_proc(s_gfx_layer, graphics_update_proc);
+    layer_add_child(window_layer, s_gfx_layer);
+    
   // Create time TextLayer
   s_time_layer = text_layer_create(GRect(0, 55, 144, 50));
   text_layer_set_background_color(s_time_layer, GColorClear);
@@ -44,12 +72,15 @@ static void main_window_load(Window *window) {
   text_layer_set_text_alignment(s_time_layer, GTextAlignmentCenter);
 
   // Add it as a child layer to the Window's root layer
-  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_time_layer));
+  layer_add_child(window_layer, text_layer_get_layer(s_time_layer));
 }
 
 static void main_window_unload(Window *window) {
     // Destroy TextLayer
     text_layer_destroy(s_time_layer);
+    
+    // and the grpahics layer
+    layer_destroy(s_gfx_layer);
 }
 
 static void init() {
