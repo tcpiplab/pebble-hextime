@@ -35,7 +35,8 @@ static void graphics_update_proc(Layer *layer, GContext *ctx) {
     GRect bounds = layer_get_bounds(layer); // starts top - left
     GPoint center = grect_center_point(&bounds);
     
-    int space = bounds.size.w / 8; // a bit dangerous
+    int s = bounds.size.w / 8; // space between each dot
+    int p = s / 2; // padding
     int upperY = center.y / 2;
     int lowerY = center.y + upperY;
     
@@ -44,20 +45,28 @@ static void graphics_update_proc(Layer *layer, GContext *ctx) {
     // Get a tm structure
     time_t temp = time(NULL); 
     struct tm *tick_time = localtime(&temp);
+    int hours = tick_time->tm_hour;
+    int mins = tick_time->tm_min;
     
-    for(int i = space/2; i < bounds.size.w; i += space) {
-        GPoint dot = {
-            .x = i, // center.x -80,
-            .y = upperY
-        };
-        graphics_draw_circle(ctx, dot, 4);
+    // create a 2d array to hold the dots (2 rows of 8, row 0 for the hour bits and row 1 for minute bits)
+    GPoint dots[2][8] = {
+        { {.x=p, .y=upperY}, {.x=p+s, .y=upperY}, {.x=s*2+p, .y=upperY}, {.x=s*3+p, .y=upperY}, {.x=s*4+p, .y=upperY}, {.x=s*5+p, .y=upperY}, {.x=s*6+p, .y=upperY}, {.x=s*7+p, .y=upperY} },
+        { {.x=p, .y=lowerY}, {.x=p+s, .y=lowerY}, {.x=s*2+p, .y=lowerY}, {.x=s*3+p, .y=lowerY}, {.x=s*4+p, .y=lowerY}, {.x=s*5+p, .y=lowerY}, {.x=s*6+p, .y=lowerY}, {.x=s*7+p, .y=lowerY} }
+    };
+    
+    // loop backward so we can render dots from right to left (todo, cater for endianess)
+    for(int i = 7; i >= 0; i--) {        
+        if( (hours >> i) & 0x01) {
+            graphics_fill_circle(ctx, dots[0][i], 5); // the bit is set
+        } else {
+            graphics_draw_circle(ctx, dots[0][i], 4);
+        }
         
-        GPoint dot2 = {
-            .x = i,
-            .y = lowerY
-        };
-        
-        graphics_fill_circle(ctx, dot2, 4);
+        if( (mins >> i) & 0x01) {
+            graphics_fill_circle(ctx, dots[1][i], 5); // the bit is set
+        } else {
+            graphics_draw_circle(ctx, dots[1][i], 4);
+        }
     }
 }
 
