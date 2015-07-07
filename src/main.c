@@ -11,16 +11,6 @@ static void update_time() {
 
   // Create a long-lived buffer
   static char buffer[] = "00:00";
-
-  // Write the current hours and minutes into the buffer
-  // formatting:  http://www.cplusplus.com/reference/ctime/strftime/
-//   if(clock_is_24h_style() == true) {
-//     // Use 24 hour format
-//     strftime(buffer, sizeof("00:00"), "%H:%M", tick_time);
-//   } else {
-//     // Use 12 hour format
-//     strftime(buffer, sizeof("00:00"), "%I:%M", tick_time);
-//   }
   
   // Format the time as hexadecimal and place the string into the buffer:
   snprintf(buffer, sizeof("00:00"), "%X:%X", tick_time->tm_hour, tick_time->tm_min);
@@ -30,17 +20,15 @@ static void update_time() {
 }
 
 static void graphics_update_proc(Layer *layer, GContext *ctx) {
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Update graphics");
+    //APP_LOG(APP_LOG_LEVEL_DEBUG, "Update graphics layer");
     
-    GRect bounds = layer_get_bounds(layer); // starts top - left
+    GRect bounds = layer_get_bounds(layer); // starts top - left, original pebble is 144x168
     GPoint center = grect_center_point(&bounds);
     
     int s = bounds.size.w / 8; // space between each dot
     int p = s / 2; // padding
     int upperY = center.y / 2;
     int lowerY = center.y + upperY;
-    
-    //APP_LOG(APP_LOG_LEVEL_DEBUG, "Bounds: %d by %d", bounds.size.w, bounds.size.h); // 144 x 168
     
     // Get a tm structure
     time_t temp = time(NULL); 
@@ -54,18 +42,20 @@ static void graphics_update_proc(Layer *layer, GContext *ctx) {
         { {.x=p, .y=lowerY}, {.x=p+s, .y=lowerY}, {.x=s*2+p, .y=lowerY}, {.x=s*3+p, .y=lowerY}, {.x=s*4+p, .y=lowerY}, {.x=s*5+p, .y=lowerY}, {.x=s*6+p, .y=lowerY}, {.x=s*7+p, .y=lowerY} }
     };
     
-    // loop backward so we can render dots from right to left (todo, cater for endianess)
+    // loop backward so we can render dots from right to left
     for(int i = 7; i >= 0; i--) {        
+        int y = 7-i; // sort out endian problem
+        
         if( (hours >> i) & 0x01) {
-            graphics_fill_circle(ctx, dots[0][i], 5); // the bit is set
+            graphics_fill_circle(ctx, dots[0][y], 5); // the bit is set
         } else {
-            graphics_draw_circle(ctx, dots[0][i], 4);
+            graphics_draw_circle(ctx, dots[0][y], 3);
         }
         
         if( (mins >> i) & 0x01) {
-            graphics_fill_circle(ctx, dots[1][i], 5); // the bit is set
+            graphics_fill_circle(ctx, dots[1][y], 5); // the bit is set
         } else {
-            graphics_draw_circle(ctx, dots[1][i], 4);
+            graphics_draw_circle(ctx, dots[1][y], 3);
         }
     }
 }
