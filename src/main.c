@@ -42,31 +42,41 @@ static void graphics_update_proc(Layer *layer, GContext *ctx) {
         { {.x=p, .y=lowerY}, {.x=p+s, .y=lowerY}, {.x=s*2+p, .y=lowerY}, {.x=s*3+p, .y=lowerY}, {.x=s*4+p, .y=lowerY}, {.x=s*5+p, .y=lowerY}, {.x=s*6+p, .y=lowerY}, {.x=s*7+p, .y=lowerY} }
     };
     
+    // for a list of colors see: http://developer.getpebble.com/docs/c/Graphics/Graphics_Types/Color_Definitions/
+    GColor onColor = COLOR_FALLBACK(GColorCobaltBlue, GColorBlack);
+    GColor offColor = COLOR_FALLBACK(GColorDarkCandyAppleRed, GColorBlack);
+    
     // loop backward so we can render dots from right to left
     for(int i = 7; i >= 0; i--) {        
         int y = 7-i; // sort out endian problem
         
         if( (hours >> i) & 0x01) {
+            graphics_context_set_fill_color(ctx, onColor);
             graphics_fill_circle(ctx, dots[0][y], 5); // the bit is set
         } else {
+            graphics_context_set_stroke_color(ctx, offColor);
             graphics_draw_circle(ctx, dots[0][y], 3);
         }
         
         if( (mins >> i) & 0x01) {
+            graphics_context_set_fill_color(ctx, onColor);
             graphics_fill_circle(ctx, dots[1][y], 5); // the bit is set
         } else {
+            graphics_context_set_stroke_color(ctx, offColor);
             graphics_draw_circle(ctx, dots[1][y], 3);
         }
     }
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "time changed by %d", units_changed);
+    //APP_LOG(APP_LOG_LEVEL_DEBUG, "time changed by %d", units_changed);
     // 2 for MINUTE_UNIT or 4 for HOUR_UNIT (you'll see 3 for sec and mins, or 7 for hours,min,secs)
     update_time();
 }
 
 static void main_window_load(Window *window) {
+    window_set_background_color(s_main_window, COLOR_FALLBACK(GColorPastelYellow, GColorClear));
+    
     Layer *window_layer = window_get_root_layer(window);
     GRect bounds = layer_get_bounds(window_layer);
     
@@ -74,18 +84,19 @@ static void main_window_load(Window *window) {
     layer_set_update_proc(s_gfx_layer, graphics_update_proc);
     layer_add_child(window_layer, s_gfx_layer);
     
-  // Create time TextLayer
-  s_time_layer = text_layer_create(GRect(0, 55, 144, 50));
-  text_layer_set_background_color(s_time_layer, GColorClear);
-  text_layer_set_text_color(s_time_layer, GColorBlack);
-  text_layer_set_text(s_time_layer, "00:00");
+    // Create time TextLayer
+    s_time_layer = text_layer_create(GRect(0, 55, 144, 50));
+    GColor textColor = COLOR_FALLBACK(GColorDarkCandyAppleRed, GColorBlack);
+    text_layer_set_text_color(s_time_layer, textColor);
+    text_layer_set_background_color(s_time_layer, GColorClear);
+    text_layer_set_text(s_time_layer, "00:00");
 
-  // Improve the layout to be more like a watchface
-  text_layer_set_font(s_time_layer, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
-  text_layer_set_text_alignment(s_time_layer, GTextAlignmentCenter);
+    // Improve the layout to be more like a watchface
+    text_layer_set_font(s_time_layer, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
+    text_layer_set_text_alignment(s_time_layer, GTextAlignmentCenter);
 
-  // Add it as a child layer to the Window's root layer
-  layer_add_child(window_layer, text_layer_get_layer(s_time_layer));
+    // Add it as a child layer to the Window's root layer
+    layer_add_child(window_layer, text_layer_get_layer(s_time_layer));
 }
 
 static void main_window_unload(Window *window) {
